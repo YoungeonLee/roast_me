@@ -1,0 +1,40 @@
+{% extends 'game/layout.html' %}
+
+{% block body%}
+<div id='main' class='d-flex flex-column'>
+    <script>
+        const body_height = document.getElementById('container').offsetHeight;
+        const used_height = document.getElementById('fixed_top').scrollHeight;
+        const remaing_height = ((body_height - used_height)*.75).toString().concat("px");
+        document.getElementById('main').style.height = remaing_height;
+    </script>
+
+    <div class='row flex-grow-1 justify-contents-center m-3'>
+        <div class='col my-auto'>
+            <div class='display-1 text-center'>
+                LOGIN
+            </div>
+            <form action="{% url 'login' %}" style='max-width: 330px; margin:auto' method="POST">
+                {% csrf_token %} 
+                <div class="form-group">
+                    <label for="InputID">ID address</label>
+                    <input name='InputID' type="text" class="form-control" id="InputID" aria-describedby="IDHelp" placeholder="Enter ID" autofocus>
+                    <small id="IDHelp" class="form-text text-muted">We'll never share your ID with anyone else.</small>
+                </div>
+                <div class="form-group">
+                    <label for="InputPassword">Password</label>
+                    <input name='InputPassword' type="password" class="form-control" id="InputPassword" placeholder="Password">
+                </div>
+                <div class="form-check">
+                    <input type="checkbox" class="form-check-input" id="Check">
+                    <label class="form-check-label" for="Check">Remember Me</label>
+                </div>
+                <input type="submit" class="btn btn-primary" value="Login">
+                {% if message %}
+                        <span class='float-right'>{{message}}</span>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+</div>
+{%endblock%}
