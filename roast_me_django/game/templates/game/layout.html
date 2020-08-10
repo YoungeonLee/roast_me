@@ -1,5 +1,5 @@
+{% load static %}
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -16,22 +16,22 @@
     <div class='container min-vh-100' id='container'>
         <div id = "fixed_top">
             <nav class="navbar justify-content-around">
-                <a class="btn btn-outline-danger btn-lg" href = "{% url 'index' %}">
-                    HOME
+                <a class="btn btn-outline-danger btn-lg pl-2" href = "{% url 'index' %}">
+                    <img src="{% static 'game/logo.png' %}" style="width:23px;height:23px;"> HOME
                 </a>
-                <a class="btn btn-outline-danger btn-lg" href = "{% url 'games' %}">
-                    GAMES
+                <a class="btn btn-outline-danger btn-lg pl-2" href = "{% url 'games' %}">
+                    <img src="{% static 'game/logo.png' %}" style="width:23px;height:23px;"> GAMES
                 </a>
-                <a class="btn btn-outline-danger btn-lg" href = "{% url 'index' %}">
-                    SUPPORT/CONTACT
+                <a class="btn btn-outline-danger btn-lg pl-2" href = "{% url 'index' %}">
+                    <img src="{% static 'game/logo.png' %}" style="width:23px;height:23px;"> SUPPORT/CONTACT
                 </a>
                 {% if user %}
-                    <a class="btn btn-outline-danger btn-lg" href = "{% url 'logout' %}">
-                        LOGOUT
+                    <a class="btn btn-outline-danger btn-lg pl-2" href = "{% url 'logout' %}">
+                        <img src="{% static 'game/logo.png' %}" style="width:23px;height:23px;"> sLOGOUT
                     </a>
                 {% else %}
-                    <a class="btn btn-outline-danger btn-lg" href = "{% url 'login' %}">
-                    LOGIN
+                    <a class="btn btn-outline-danger btn-lg pl-2" href = "{% url 'login' %}">
+                        <img src="{% static 'game/logo.png' %}" style="width:23px;height:23px;"> LOGIN
                     </a>
                 {% endif %}
                     
