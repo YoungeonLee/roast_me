@@ -16,21 +16,21 @@
     <div class='container min-vh-100' id='container'>
         <div id = "fixed_top">
             <nav class="navbar justify-content-around">
-                <a class="btn btn-outline-danger btn-lg pl-2" href = "{% url 'index' %}">
+                <a class="btn btn-outline-danger btn-lg pl-2 m-1" href = "{% url 'game:index' %}">
                     <img src="{% static 'game/logo.png' %}" style="width:23px;height:23px;"> HOME
                 </a>
-                <a class="btn btn-outline-danger btn-lg pl-2" href = "{% url 'games' %}">
+                <a class="btn btn-outline-danger btn-lg pl-2 m-1" href = "{% url 'game:games' %}">
                     <img src="{% static 'game/logo.png' %}" style="width:23px;height:23px;"> GAMES
                 </a>
-                <a class="btn btn-outline-danger btn-lg pl-2" href = "{% url 'index' %}">
+                <a class="btn btn-outline-danger btn-lg pl-2 m-1" href = "{% url 'game:index' %}">
                     <img src="{% static 'game/logo.png' %}" style="width:23px;height:23px;"> SUPPORT/CONTACT
                 </a>
                 {% if user %}
-                    <a class="btn btn-outline-danger btn-lg pl-2" href = "{% url 'logout' %}">
-                        <img src="{% static 'game/logo.png' %}" style="width:23px;height:23px;"> sLOGOUT
+                    <a class="btn btn-outline-danger btn-lg pl-2 m-1" href = "{% url 'game:logout' %}">
+                        <img src="{% static 'game/logo.png' %}" style="width:23px;height:23px;"> LOGOUT
                     </a>
                 {% else %}
-                    <a class="btn btn-outline-danger btn-lg pl-2" href = "{% url 'login' %}">
+                    <a class="btn btn-outline-danger btn-lg pl-2 m-1" href = "{% url 'game:login' %}">
                         <img src="{% static 'game/logo.png' %}" style="width:23px;height:23px;"> LOGIN
                     </a>
                 {% endif %}

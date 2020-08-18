@@ -4,12 +4,12 @@
     <h2 class="display-2 text-center">
         GAMES
     </h2>
-    <form class="text-center mt-3" action ="{% url 'games' %}" method='post'>
+    <form class="text-center mt-3" action ="{% url 'game:games' %}" method='post'>
         {% csrf_token %} 
         {{form}}
         <input type='submit' value='Search'>
     </form>
-    <form class="text-center mt-3" action ="{% url 'games' %}" method='post'>
+    <form class="text-center mt-3" action ="{% url 'game:games' %}" method='post'>
         {% csrf_token %}
         <input type='submit' value='Create New Game'>
     </form>

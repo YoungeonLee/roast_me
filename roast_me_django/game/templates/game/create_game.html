@@ -4,7 +4,7 @@
     <h2 class="display-2 text-center">
         GAMES
     </h2>
-    <form action ="{% url 'create_game' %}" method='post'>
+    <form action ="{% url 'gmae:create_game' %}" method='post'>
         {% csrf_token %}
         <input type='submit'>
     </form>>
