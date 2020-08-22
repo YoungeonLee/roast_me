@@ -26,12 +26,12 @@
                     <img src="{% static 'game/logo.png' %}" style="width:23px;height:23px;"> SUPPORT/CONTACT
                 </a>
                 {% if user %}
-                    <a class="btn btn-outline-danger btn-lg pl-2 m-1" href = "{% url 'game:logout' %}">
-                        <img src="{% static 'game/logo.png' %}" style="width:23px;height:23px;"> LOGOUT
+                    <a class="btn btn-outline-danger btn-lg pl-2 m-1" href = "{% url 'game:profile' %}">
+                        <img src="{% static 'game/logo.png' %}" style="width:23px;height:23px;"> Profile
                     </a>
                 {% else %}
-                    <a class="btn btn-outline-danger btn-lg pl-2 m-1" href = "{% url 'game:login' %}">
-                        <img src="{% static 'game/logo.png' %}" style="width:23px;height:23px;"> LOGIN
+                    <a class="btn btn-outline-danger btn-lg pl-2 m-1" href = "{% url 'game:setprofile' %}">
+                        <img src="{% static 'game/logo.png' %}" style="width:23px;height:23px;"> Set Profile
                     </a>
                 {% endif %}
                     

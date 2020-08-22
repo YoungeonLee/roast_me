@@ -31,6 +31,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'channels',
     'game.apps.GameConfig',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -69,6 +70,15 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'roast_me.wsgi.application'
+ASGI_APPLICATION = 'roast_me.routing.application'
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('127.0.0.1', 6379)],
+        },
+    },
+}
 
 
 # Database
@@ -77,7 +87,7 @@ WSGI_APPLICATION = 'roast_me.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'postgres',
+        'NAME': 'roastme',
         'USER': 'postgres',
         'PASSWORD': 'zxc8553',
         'HOST': 'localhost',

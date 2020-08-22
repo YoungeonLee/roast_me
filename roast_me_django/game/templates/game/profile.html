@@ -1,0 +1,17 @@
+{% extends 'game/layout.html' %}
+
+{% block body%}
+
+<h2 class="display-2 text-center" id='heading'>
+    PROFILE
+</h2>
+<div class="card mx-auto mb-3" style="max-width: 500px;">
+    <img src="../{{img_link}}" class="card-img-top" alt="Profile Image" id="profileImage">
+    <div class="card-body">
+      <h5 class="card-title">{{username}}</h5>
+      <p class="card-text">{{description}}</p>
+      <a href="{% url 'game:setprofile' %}" class="btn btn-outline-danger">Reset Profile</a>
+    </div>
+</div>
+
+{%endblock%}

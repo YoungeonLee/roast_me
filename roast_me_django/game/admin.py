@@ -1,9 +1,11 @@
 from django.contrib import admin
 
 # Register your models here.
-from .models import Profile
+from .models import Profile, Game, Player
 
 admin.site.site_header = "Roast Me Admin"
 admin.site.site_title = "Roast Me Admin"
 admin.site.index_title = "Roast Me Administration"
 admin.site.register(Profile)
+admin.site.register(Game)
+admin.site.register(Player)
