@@ -1,28 +1,47 @@
-<!-- chat/templates/chat/room.html -->
+change props to states
+
+
+{% load static %}
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>Game Room</title>
     <script src="https://unpkg.com/react@16/umd/react.development.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js" crossorigin></script>
     <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
 </head>
 <body>
     <div id="app"></div>
+
     <script type="text/babel">
-        class Players extends React.Component{
+        class Player extends React.Component{
             render(){
+                const style = {
+                    float: 'right'
+                }
+                if (this.props.state === 1){
+                    var imgSrc = "{% static 'game/logo.png' %}"
+                } else if (this.props.state === 2){
+                    var imgSrc = "{% static 'game/gavel.png' %}"
+                } else{
+                    var imgSrc = ""
+                }
+        
                 return(
-                    <div>
-                    <div> {this.props.name} </div>
-                    <div> {this.props.state} </div>
-                    <div> {this.props.score} </div>
-                    </div>
+                    <li className='list-group-item'>
+                        <span> name {this.props.name} </span>
+                        <span> state {this.props.state} </span>
+                        <span> {this.props.admin.toString()} </span>
+                        <img src={imgSrc}/>
+                        <span style={style}> {this.props.score}</span>
+                    </li>
                 );
             }
         }
-        class App extends React.Component{
+        class Scoreboard extends React.Component{
             /*
             constructor(props){
                 super(props);
@@ -31,12 +50,14 @@
                 };
             }*/
             render(){
-                const items = []
-                for (player in this.props.players){
-                    items.push(<Players name = {player.name} score = {player.score} state = {player.state}/>)
-                }
+                const data = this.props.players;
+                var items = Object.keys(data).map(key => 
+                    <Player key={key} name={key} state={data[key].state} score={data[key].score} admin={data[key].admin}/>
+                );
                 return(
-                    {items}
+                    <ul className='list-group'>
+                        {items}
+                    </ul>
                 );
             }
 
@@ -44,6 +65,161 @@
                 this.setState(state => ({
                     loading: false
                 }))
+            }
+        }
+
+        class StartButton extends React.Component{
+            render(){
+                if (this.props.player.button){
+                    var buttonStyle = {display: "block"}
+                } else {
+                    var buttonStyle = {display: "none"}
+                }
+                return(
+                    <button onClick={startGame} style={buttonStyle}> Click me </button>
+                );
+            }
+        }
+        class Roastee extends React.Component{
+            render(){
+                const imgStyle = {
+                    maxWidth: "100%",
+                    maxHeight: "100%"
+                }
+                return(
+                    <div className="card">
+                        <img className="card-img-top" src={this.props.roastee.imgLink}/>
+                        <div className="card-body">
+                            <h5 className="card-title">{this.props.roastee.username}</h5>
+                            <p className="card-text">{this.props.roastee.description}</p>
+                        </div>
+                    </div>
+                );
+            }
+        }
+
+        class Roast extends React.Component{
+            constructor(props) {
+                super(props);
+                // This binding is necessary to make `this` work in the callback
+                this.handleClick = this.handleClick.bind(this);
+            }
+
+            handleClick(){
+                const roastContent = document.getElementById("roastContent").value;
+                document.getElementById("roastButton").style.display = "none"
+                gameSocket.send(JSON.stringify({"action": "roast", "message": roastContent}));
+            }
+            render(){
+                if (this.props.player.state === 0){
+                    var inputStyle = {display: "block"}
+                } else {
+                    var inputStyle = {display: "none"}
+                }
+                return(
+                    <div style={inputStyle} id="roastButton">
+                        <div className="input-group">
+                            <textarea id = "roastContent" className="form-control" aria-label="With textarea"></textarea>
+                            <div className="input-group-append">
+                                <button onClick={this.handleClick} className="input-group-text">Roast</button>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+        }
+
+        class JudgeButton extends React.Component{
+            constructor(props) {
+                super(props);
+                // This binding is necessary to make `this` work in the callback
+                this.handleClick = this.handleClick.bind(this);
+            }
+            
+            handleClick(){
+                    if (this.props.player.state === 2){
+                        document.getElementById("judge").style.display = "none"
+                        gameSocket.send(JSON.stringify({"action":"judge", "player": this.props.username}));
+                    }
+                }
+
+            render(){
+                //var buttonStyle = {maxWidth: "18rem;"}
+                if (this.props.player.state === 2){
+                    var classStyle = "card btn-outline-danger mb-3";
+                    var textStyle = "card-body";
+                } else{
+                    var classStyle = "card mb-3";
+                    var textStyle = "card-body text-danger";
+                }
+
+                return(
+                    <div className={classStyle} onClick={this.handleClick}>
+                        <div className={textStyle}>
+                            <p className="card-text">{this.props.content}</p>
+                        </div>
+                    </div>
+                )
+            }
+        }
+
+        class Judge extends React.Component{
+            render(){
+                if (this.props.game.state === 2){
+                    var judgeStyle = {display: "block"}
+                } else {
+                    var judgeStyle = {display: "none"};
+                }
+                const data = this.props.game.roast;
+                var items = Object.keys(data).map(key => 
+                    <JudgeButton key={key} username={key} content={data[key]} player={this.props.player}/>
+                )
+                return(
+                    <div style={judgeStyle} id="judge">
+                        {items}
+                    </div>
+                )
+            }
+        }
+
+        class App extends React.Component{
+            render(){
+                return(
+                    <div className="container-fluid">
+                        <div className="row">
+                            <div className="col">
+                                <div className="row">
+                                    <div className = "col">
+                                        <div>{this.props.game.state}</div>
+                                        <Scoreboard players={this.props.game.players}/>
+                                    </div>
+                                </div>
+                                <div className="row">
+                                    <div className="col">
+                                        <StartButton player={this.props.player}/>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="col">
+                                <div className="row">
+                                    <div className="col">
+                                        <Roastee roastee={this.props.game.roastee}/>
+                                    </div>
+                                </div>
+                                <div className="row">
+                                    <div className="col">
+                                        <Judge player={this.props.player} game = {this.props.game}/>
+                                    </div>
+                                </div>
+                                <div className="row">
+                                    <div className="col">
+                                        <Roast player={this.props.player}/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )
             }
         }
  
@@ -58,22 +234,23 @@
             + '/'
         );
 
+        function startGame(){
+            gameSocket.send(JSON.stringify({'action': "startGame"}));
+        }
+
         gameSocket.onmessage = function(e) {
             console.log(e)
             const data = JSON.parse(e.data);
             console.log(data)
-            console.log(data.message)
-            ReactDOM.render(<App players={data.players}/>, document.getElementById("app"));        };
+            ReactDOM.render(<App game={data.game} player={data.player}/>, document.getElementById("app"));        
+        };
 
         gameSocket.onclose = function(e) {
             alert('Websocket closed unexpectedly');
         };
-
-        document.querySelector('#send').onclick = function(e) {
-            gameSocket.send(JSON.stringify({
-                'message': "message"
-            }));
-        };
     </script>
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
 </body>
 </html>

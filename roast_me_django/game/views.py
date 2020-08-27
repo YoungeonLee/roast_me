@@ -143,6 +143,7 @@ def setprofile(request):
                     "message": "The username is already taken"
                 })
         else:
+            print(request.session)
             request.session.save()
             print(f"session key: {request.session.session_key}")
             profile = Profile(user_id=request.session.session_key, username=ID, image=image, description=description)
@@ -191,6 +192,9 @@ def room(request, room_name):
         if game.full():
             return HttpResponse("<h1>Game is full</h1>", status=409)
         if profile_exists(request.session):
+            profile = Profile.objects.get(user_id=request.session.session_key)
+            if game.player.filter(user=profile).exists():
+                return HttpResponse("You are already in game. Check your other tabs", status=409)
             return render(request, 'game/room.html', {
                 'room_name': room_name
             })

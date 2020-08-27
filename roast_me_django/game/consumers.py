@@ -1,10 +1,22 @@
 import json
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
-from .models import Game, Player, Profile
+from .models import Game, Player, Profile, Roast
 # from django.http import HttpResponseRedirect, HttpResponse, HttpResponseNotFound
+# docker run -p 6379:6379 -d redis:5
 
 class GameConsumer(WebsocketConsumer):
+    def get_game(self):
+        return Game.objects.get(name=self.room_name)
+
+    def get_profile(self):
+        return Profile.objects.get(user_id=self.scope["session"].session_key)
+
+    def get_player(self):
+        profile = self.get_profile()
+        game = self.get_game()
+        return Player.objects.get(user=profile, game=game)
+
     def connect(self):
         self.room_name = self.scope['url_route']['kwargs']['room_name']
         self.room_group_name = self.room_name
@@ -15,11 +27,14 @@ class GameConsumer(WebsocketConsumer):
             self.room_group_name,
             self.channel_name
         )
-        self.game = Game.objects.get(name=self.room_name)
-        if not self.game.full():
-            self.profile = Profile.objects.get(user_id=self.scope["session"].session_key)
-            self.player = Player(user= self.profile, state= 0, game= self.game, score = 0)
-            self.player.save()
+        game = self.get_game()
+        if not game.full():
+            profile = self.get_profile()
+            if game.empty():
+                player = Player(user= profile, state= 0, game= game, score = 0, admin=True)
+            else:
+                player = Player(user= profile, state= 0, game= game, score = 0)
+            player.save()
             self.accept()
             async_to_sync(self.channel_layer.group_send)(
                 self.room_group_name,
@@ -33,7 +48,17 @@ class GameConsumer(WebsocketConsumer):
 
     def disconnect(self, close_code):
         # Leave room group
-        self.player.delete()
+        game = self.get_game()
+        player = self.get_player()
+
+        if player.admin:
+            print("admin left")
+            player.delete()
+            game.make_admin()
+        else:
+            print("player left")
+            player.delete()
+            
         async_to_sync(self.channel_layer.group_discard)(
             self.room_group_name,
             self.channel_name
@@ -48,19 +73,50 @@ class GameConsumer(WebsocketConsumer):
     # Receive message from WebSocket
     def receive(self, text_data):
         text_data_json = json.loads(text_data)
-        #message = text_data_json['message']
+        print(text_data)
+        # message = text_data_json['message']
+        game = self.get_game()
+        if text_data_json['action'] == "startGame":
+            game.shuffle()
+            game.change_state(1)
+        elif text_data_json['action'] == 'roast':
+            content = text_data_json['message']
+            player = self.get_player()
+            roast = Roast(game=game, player=player, roast=content)
+            roast.save()
+            if game.roast_complete():
+                game.change_state(2)
+        elif text_data_json["action"] == "judge":
+            username = text_data_json["player"]
+            profile = Profile.objects.get(username=username)
+            winner = game.player.get(user=profile)
+            winner.add_score()
+            game.change_state(3)
+            async_to_sync(self.channel_layer.group_send)(
+                self.room_group_name,
+                {
+                    'type': 'game_update',
+                }
+            )
+            game.change_state(1)
+            game.shuffle()
 
+        
         # Send message to room group
         async_to_sync(self.channel_layer.group_send)(
             self.room_group_name,
             {
-                'type': 'game_message',
-                'message':self.channel_name
+                'type': 'game_update',
             }
         )
 
     # Receive message from room group
     def game_update(self, event):
-        json_data = self.game.json_data()
+        player = self.get_player()
+        game = self.get_game()
+        json_data = {
+            "game": game.json_data(),
+            "player": player.player_info()
+        }
         # Send message to WebSocket
         self.send(text_data=json.dumps(json_data))
