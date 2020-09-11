@@ -2,6 +2,7 @@ import json
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
 from .models import Game, Player, Profile, Roast
+import time
 # from django.http import HttpResponseRedirect, HttpResponse, HttpResponseNotFound
 # docker run -p 6379:6379 -d redis:5
 
@@ -50,6 +51,7 @@ class GameConsumer(WebsocketConsumer):
         # Leave room group
         game = self.get_game()
         player = self.get_player()
+        player_state = player.state
 
         if player.admin:
             print("admin left")
@@ -58,6 +60,15 @@ class GameConsumer(WebsocketConsumer):
         else:
             print("player left")
             player.delete()
+
+        if game.num_of_players() < 4:
+            game.change_state(0)
+        elif player_state != 0:
+            game.shuffle()
+        else:
+            if game.roast_complete():
+                game.clear_submissions()
+                game.change_state(2)
             
         async_to_sync(self.channel_layer.group_discard)(
             self.room_group_name,
@@ -78,30 +89,38 @@ class GameConsumer(WebsocketConsumer):
         game = self.get_game()
         if text_data_json['action'] == "startGame":
             game.shuffle()
-            game.change_state(1)
         elif text_data_json['action'] == 'roast':
             content = text_data_json['message']
             player = self.get_player()
+            player.check_submission()
             roast = Roast(game=game, player=player, roast=content)
             roast.save()
+        
             if game.roast_complete():
+                game.clear_submissions()
                 game.change_state(2)
         elif text_data_json["action"] == "judge":
             username = text_data_json["player"]
             profile = Profile.objects.get(username=username)
             winner = game.player.get(user=profile)
             winner.add_score()
-            game.change_state(3)
-            async_to_sync(self.channel_layer.group_send)(
-                self.room_group_name,
-                {
-                    'type': 'game_update',
-                }
-            )
-            game.change_state(1)
-            game.shuffle()
-
-        
+            winning_roast = winner.roast.get()
+            winning_roast.select()
+            if game.winner():
+                game.change_state(4)
+            else:
+                game.change_state(3)
+                self.game_update(None)
+                async_to_sync(self.channel_layer.group_send)(
+                    self.room_group_name,
+                    {
+                        'type': 'game_update',
+                    }
+                )
+                time.sleep(5)
+                game.next_round(winner)
+        elif text_data_json["action"] == "skip":
+            game.skip()
         # Send message to room group
         async_to_sync(self.channel_layer.group_send)(
             self.room_group_name,

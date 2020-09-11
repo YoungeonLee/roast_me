@@ -12,6 +12,25 @@
     <div class="text-center my-3"><a href ="{% url 'game:creategame' %}">
         Create New Game
     </a></div>
+    
+    <div class="row">
+        {% for game in games %}
+        <div class="col">
+            <a href="room/{{game.name}}" class="card btn btn-outline-danger text-left" style="width: 18rem;">
+                <div class="card-body">
+                  <h5 class="card-title">{{game.name}}</h5>
+                  <p class="card-text">{{game.num_of_players}}/{{game.max_people}}</p>
+                </div>
+            </a>
+        </div>
+        {% empty %}
+            <div class='text-center'>No One Is Playing Right Now :(</div>
+        {% endfor %}
+    </div>
+
+
+
+<!--
     <ul>
         {% for game in games %}
             <li>{{ game }}</li>
@@ -19,5 +38,6 @@
             <div class='text-center'>No One Is Playing Right Now :(</div>
         {% endfor %}
     </ul>
+-->
 {%endblock%}
 

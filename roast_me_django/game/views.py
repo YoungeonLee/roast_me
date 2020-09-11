@@ -9,8 +9,10 @@ from .models import Profile, Game, Player
 from pathlib import Path
 from os.path import join
 from PIL import Image, UnidentifiedImageError
+from django.core.files.uploadedfile import InMemoryUploadedFile
 BASE_DIR = Path(__file__).resolve(strict=True).parent.parent
-game_list = []
+from django.contrib.sessions.models import Session
+
 
 class SearchGameForm(forms.Form):
     game = forms.CharField(label='')
@@ -25,12 +27,12 @@ def index(request):
     })
 
 def games(request):
-    print(request.session.keys())
-    print(request.session.session_key)
     # if need to make profile
     if not profile_exists(request.session):
         return HttpResponseRedirect(reverse("game:setprofile"))
     
+    game_list = Game.objects.all()
+    """
     if request.method == "POST":
         form = SearchGameForm(request.POST)
         if form.is_valid():
@@ -43,6 +45,7 @@ def games(request):
                 "games": game_list,
                 "form": form
             })
+        """
 
     return render(request, "game/games.html", {
         "user": profile_exists(request.session),
@@ -77,8 +80,6 @@ def logout_view(request):
 
 def signup_view(request):
     if request.method == "POST":
-        print(request.POST)
-        print(request.FILES)
         #print(request.POST)
         ID = request.POST["InputID"]
         password = request.POST['InputPassword']
@@ -105,24 +106,30 @@ def signup_view(request):
 def setprofile(request):
     # post request
     if request.method == "POST":
-        print(request.POST)
-        print(request.FILES)
         #print(request.POST)
         try:
             # check if all forms are valid
             ID = request.POST["InputID"]
             image = request.FILES['profileImage']
+            print(image)
             print(type(image))
             description = request.POST["description"]
-        except:
+        except Exception as e:
+            print(e)
             return render(request, 'game/setprofile.html',{
                     "user": profile_exists(request.session),
                     "message": "Server Error; make sure you filled the entire form correctly"
                 })
         
         try:
-            # check if image is valid
-            im=Image.open(image)
+            # check if image is valid and resize
+            img = Image.open(image)
+            img.thumbnail((1920, 1080))
+            if (type(image) is InMemoryUploadedFile):
+                print(1)
+                img.save(image, optimize=True)
+            else:
+                img.save(image.temporary_file_path(), optimize=True)
         except UnidentifiedImageError:
             return render(request, 'game/setprofile.html',{
                     "user": profile_exists(request.session),
@@ -130,27 +137,31 @@ def setprofile(request):
                 })
             
         if profile_exists(request.session):
+            print(2)
             profile = Profile.objects.get(user_id=request.session.session_key)
             profile.username = ID
             profile.image = image
             profile.description = description
             try:
                 profile.save()
-            except IntegrityError:
-                print(1)
+            except IntegrityError as e:
+                # delete image !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                print(e)
                 return render(request, 'game/setprofile.html',{
                     "user": profile_exists(request.session),
                     "message": "The username is already taken"
                 })
         else:
+            print(3)
             print(request.session)
-            request.session.save()
-            print(f"session key: {request.session.session_key}")
+            print(request.session.session_key)
+            if not Session.objects.filter(pk=request.session.session_key).exists():
+                request.session.create()
             profile = Profile(user_id=request.session.session_key, username=ID, image=image, description=description)
             try:
                 profile.save()
-            except IntegrityError:
-                print(2)
+            except IntegrityError as e:
+                print(e)
                 return render(request, 'game/setprofile.html',{
                     "user": profile_exists(request.session),
                     "message": "The username is already taken"
@@ -168,7 +179,6 @@ def profile(request):
         username = profile.username
         description = profile.description
         img_link = profile.image
-        print(username, description, img_link)
         return render(request, 'game/profile.html',{
             "user": profile_exists(request.session),
             "username":username,
@@ -209,10 +219,12 @@ def creategame(request):
         return HttpResponseRedirect(reverse("game:setprofile"))
     # post request
     if request.method == "POST":
+        # if game already exists give error !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         room_name = request.POST["room-name"]
         max_people = request.POST["max-people"]
         goal_score = request.POST["goal-score"]
-        game = Game(name = room_name, max_people = max_people, goal_score = goal_score, state = 0)
+        timer = request.POST["timer"]
+        game = Game(name = room_name, max_people = max_people, goal_score = goal_score, state = 0, round_length=timer)
         game.save()
         return HttpResponseRedirect(reverse("game:room", args=[room_name]))
 

@@ -1,6 +1,3 @@
-change props to states
-
-
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
@@ -70,31 +67,66 @@ change props to states
 
         class StartButton extends React.Component{
             render(){
-                if (this.props.player.button){
-                    var buttonStyle = {display: "block"}
+                if (this.props.player.button && this.props.game.state !== 3){
+                    var buttonStyle = {display: "block"};
+                    if (this.props.game.state === 0){
+                        var text = "start";
+                        var func = startGame;
+                    } else if (this.props.game.state === 4){
+                        var text = "new game";
+                        var func = startGame;
+                    } else {
+                        var text = "skip";
+                        var func = skip;
+                    }
                 } else {
-                    var buttonStyle = {display: "none"}
+                    var buttonStyle = {display: "none"};
+                    var text = "";
+                    var func = null
                 }
                 return(
-                    <button onClick={startGame} style={buttonStyle}> Click me </button>
+                    <button onClick={func} style={buttonStyle}> {text} </button>
                 );
             }
         }
         class Roastee extends React.Component{
+
+            componentDidUpdate(prevProps, prevState) {
+                if (this.props.game.state !== 0){
+                    var img = images[this.props.game.roastee.username];
+                    var imageContainer = document.getElementById("roastImage");
+                    imageContainer.replaceChild(img, imageContainer.childNodes[0]);
+                }
+            }
+
             render(){
                 const imgStyle = {
                     maxWidth: "100%",
                     maxHeight: "100%"
                 }
-                return(
-                    <div className="card">
-                        <img className="card-img-top" src={this.props.roastee.imgLink}/>
-                        <div className="card-body">
-                            <h5 className="card-title">{this.props.roastee.username}</h5>
-                            <p className="card-text">{this.props.roastee.description}</p>
+                if (this.props.game.winner !== ""){
+                    return(
+                        <div> 
+                            {this.props.game.winner} won the game!
                         </div>
-                    </div>
-                );
+                    )
+                } else if (this.props.game.state !== 0){
+                    return(
+                        <div className="card">
+                            <div id="roastImage">
+                                <img/>
+                            </div>
+                            <div className="card-body">
+                                <h5 className="card-title">{this.props.game.roastee.username}</h5>
+                                <p className="card-text">{this.props.game.roastee.description}</p>
+                            </div>
+                        </div>
+                    );
+                } else {
+                    return(
+                        <div>Get Ready to Roast Each Other!</div>
+                    );
+                }
             }
         }
 
@@ -107,11 +139,11 @@ change props to states
 
             handleClick(){
                 const roastContent = document.getElementById("roastContent").value;
-                document.getElementById("roastButton").style.display = "none"
+                document.getElementById("roastContent").value = "";
                 gameSocket.send(JSON.stringify({"action": "roast", "message": roastContent}));
             }
             render(){
-                if (this.props.player.state === 0){
+                if (this.props.player.state === 0 && this.props.player.submitted === false && this.props.game.state === 1){
                     var inputStyle = {display: "block"}
                 } else {
                     var inputStyle = {display: "none"}
@@ -128,7 +160,24 @@ change props to states
                 )
             }
         }
+        class Selection extends React.Component{
+            render(){
+                if (this.props.game.state === 3){
+                    var cardStyle = {display: "block"};
+                } else{
+                    var cardStyle = {display: "none"};
+                }
 
+                return(
+                    <div className="card text-white bg-danger mb-3" style={cardStyle}>
+                        <div className="card-header">{this.props.game.roundWinner}</div>
+                        <div className="card-body">
+                            <p className="card-text">{this.props.game.selectedRoast}</p>
+                        </div>
+                    </div>
+                )
+            }
+        }
         class JudgeButton extends React.Component{
             constructor(props) {
                 super(props);
@@ -182,6 +231,46 @@ change props to states
             }
         }
 
+        class Timer extends React.Component{
+            constructor(props) {
+                super(props);
+                this.state = {time: props.game.timer - Math.round((new Date() - new Date(props.game.time))/1000 )};
+            }
+            componentDidMount() {
+                this.interval = setInterval(() => {
+                    let t = this.props.game.timer - Math.round((new Date() - new Date(this.props.game.time))/1000 );
+                    if (t >= 0){
+                        this.setState({time: t});
+                    } else {
+                        if (this.props.player.admin && (this.props.game.state === 1 || this.props.game.state === 2)){
+                            skip();
+                        }
+                    }
+                }, 1000);
+            }
+
+            componentWillUnmount() {
+                clearInterval(this.interval);
+            }
+
+            componentDidUpdate(prevProps, prevState) {
+                if (prevProps.game.state !== this.props.game.state){
+                    this.setState({time: this.props.game.timer - Math.round((new Date() - new Date(this.props.game.time))/1000 )})
+                }
+            }
+
+            render(){
+                if (this.props.game.state === 1 || this.props.game.state === 2){
+                    var timerStyle = {display: "block"};
+                } else {
+                    var timerStyle = {display: "none"};
+                }
+                return(
+                    <div style={timerStyle}>{this.state.time}</div>
+                )
+            }
+        }
+
         class App extends React.Component{
             render(){
                 return(
@@ -191,19 +280,20 @@ change props to states
                                 <div className="row">
                                     <div className = "col">
                                         <div>{this.props.game.state}</div>
+                                        <Timer game = {this.props.game} player = {this.props.player}/>
                                         <Scoreboard players={this.props.game.players}/>
                                     </div>
                                 </div>
                                 <div className="row">
                                     <div className="col">
-                                        <StartButton player={this.props.player}/>
+                                        <StartButton player={this.props.player} game = {this.props.game}/>
                                     </div>
                                 </div>
                             </div>
                             <div className="col">
                                 <div className="row">
                                     <div className="col">
-                                        <Roastee roastee={this.props.game.roastee}/>
+                                        <Roastee game ={this.props.game}/>
                                     </div>
                                 </div>
                                 <div className="row">
@@ -213,7 +303,12 @@ change props to states
                                 </div>
                                 <div className="row">
                                     <div className="col">
-                                        <Roast player={this.props.player}/>
+                                        <Selection player={this.props.player} game = {this.props.game}/>
+                                    </div>
+                                </div>
+                                <div className="row">
+                                    <div className="col">
+                                        <Roast player={this.props.player} game = {this.props.game}/>
                                     </div>
                                 </div>
                             </div>
@@ -234,14 +329,40 @@ change props to states
             + '/'
         );
 
+        function skip(){
+            gameSocket.send(JSON.stringify({'action': "skip"}));
+        }
         function startGame(){
             gameSocket.send(JSON.stringify({'action': "startGame"}));
         }
+        
+        var images = {}
 
         gameSocket.onmessage = function(e) {
-            console.log(e)
+            console.log(e);
             const data = JSON.parse(e.data);
-            console.log(data)
+            console.log(data);
+            var player;
+            for (player in data.game.players){
+                if (!(player in images)){
+                    var image = new Image();
+                    image.src = data.game.players[player].image;
+                    image.className = "card-img-top";
+                    images[player] = image;
+                    console.log("new image 1");
+                } 
+                /* do this after having a server name
+                else {
+                    if (images[player].src !== data.game.players[player].image){
+                        var image = new Image();
+                        image.src = data.game.players[player].image;
+                        image.className = "card-img-top";
+                        images[player] = image;
+                        console.log("new image 2");
+                    }
+                }
+                */
+            }
             ReactDOM.render(<App game={data.game} player={data.player}/>, document.getElementById("app"));        
         };
 
