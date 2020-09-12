@@ -12,6 +12,7 @@ from PIL import Image, UnidentifiedImageError
 from django.core.files.uploadedfile import InMemoryUploadedFile
 BASE_DIR = Path(__file__).resolve(strict=True).parent.parent
 from django.contrib.sessions.models import Session
+from io import BytesIO
 
 
 class SearchGameForm(forms.Form):
@@ -123,11 +124,17 @@ def setprofile(request):
         
         try:
             # check if image is valid and resize
+            print("opening image")
             img = Image.open(image)
+            print("thumbnailing")
             img.thumbnail((1920, 1080))
             if (type(image) is InMemoryUploadedFile):
-                print(1)
-                img.save(image, optimize=True)
+                print("inmemory")
+                newImage = BytesIO()
+                print("saving")
+                img.save(newImage, format=img.format ,optimize=True)
+                print("assigning")
+                image.file = newImage
             else:
                 img.save(image.temporary_file_path(), optimize=True)
         except UnidentifiedImageError:
