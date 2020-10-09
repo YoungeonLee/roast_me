@@ -1,0 +1,36 @@
+{% extends 'game/layout.html' %}
+
+{% block body%}
+
+<h2 class="display-2 text-center" id='heading'>
+    SUPPORT/CONTACT
+</h2>
+
+<h1 class="mt-3">
+    Send message to the developer
+</h1>
+<div class="mb-3">
+    <form id="message" action="{% url 'game:support' %}" method="POST">
+        {% csrf_token %} 
+        <div class="form-group">
+            <textarea required name='content' maxlength="400" class="form-control" id="content" autofocus>                    
+            </textarea>
+            <small class="form-text text-muted">max 400 characters</small>
+        </div>
+        <input type="submit" class="btn btn-outline-danger mb-3" value="Submit">
+    </form>
+</div>
+
+<h1 class="mt-3">
+    Join our discrod server!
+</h1>
+<div class="mb-3">
+    Report bugs, request features, and chat with us at our <a href="https://discord.gg/cBWNfRq" target="_blank">discord server!</a>
+</div>
+<iframe src="https://discordapp.com/widget?id=760836652893077516&theme=dark" width="350" height="500" allowtransparency="true" frameborder="0" sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"></iframe>
+{% if message %}
+<script>
+    alert("{{message}}");
+</script>
+{% endif %}
+{%endblock%}

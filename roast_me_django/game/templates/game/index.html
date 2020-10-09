@@ -1,61 +1,59 @@
 {% extends 'game/layout.html' %}
 
 {% block body%}
-
+{% load static %}
 <h2 class="display-2 text-center" id='heading'>
     HOW TO PLAY
 </h2>
-<div class="accordion mx-auto mb-5" id="accordion" style="max-width: 600px;">
+  <div style="max-width: 700px;" class="mx-auto">
     <div class="card">
-      <div class="card-header" id="headingOne">
+      <div class="card-header bg-danger text-white" id="headingOne">
         <h5 class="mb-0">
-          <button class="btn btn-link collapsed btn-block text-left" type="button" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-            Make Profile
-          </button>
+          Set Profile
         </h5>
       </div>
   
-      <div id="collapseOne" class="collapse" aria-labelledby="headingOne" data-parent="#accordion">
         <div class="card-body">
-          <ul>
-              <li>Sign up or play as a guest</li>
-              <li>Upload an image</li>
-              <li>Write a description</li>
+          <ul class="list-group list-group-flush">
+              <li class="list-group-item">Click "Set Profile" button or <a class="text-danger" href = "{% url 'game:setprofile' %}">here</a></li>
+              <li class="list-group-item">Pick a username</li>
+              <li class="list-group-item">Upload a picture</li>
+              <li class="list-group-item">Write a description</li>
           </ul>
         </div>
-      </div>
     </div>
     <div class="card">
-      <div class="card-header" id="headingTwo">
+      <div class="card-header bg-danger text-white" id="headingTwo">
         <h5 class="mb-0">
-          <button class="btn btn-link collapsed btn-block text-left" type="button" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
-            Join or Create Game
-          </button>
+          Join or Create Game
         </h5>
       </div>
-      <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordion">
         <div class="card-body">
-          <ul>
-              <li>The game is best played with 4+ people</li>
-              <li>Visit our games page to join or create a game!</li>
+          <ul class="list-group list-group-flush">
+              <li class="list-group-item"><a class="text-danger" href = "{% url 'game:games' %}">Join</a> or <a class="text-danger" href = "{% url 'game:creategame' %}">create</a> game</li>
+              <li class="list-group-item">The game requires 4+ people</li>
             </ul>
         </div>
-      </div>
     </div>
-    <div class="card">
-      <div class="card-header" id="headingThree">
+    <div class="card mb-3">
+      <div class="card-header bg-danger text-white" id="headingThree">
         <h5 class="mb-0">
-          <button class="btn btn-link collapsed btn-block text-left" type="button" data-toggle="collapse" data-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
-            Roast Each Other!
-          </button>
+          Roast Each Other!
         </h5>
       </div>
-      <div id="collapseThree" class="collapse" aria-labelledby="headingThree" data-parent="#accordion">
         <div class="card-body">
-          Anim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. 3 wolf moon officia aute, non cupidatat skateboard dolor brunch. Food truck quinoa nesciunt laborum eiusmod. Brunch 3 wolf moon tempor, sunt aliqua put a bird on it squid single-origin coffee nulla assumenda shoreditch et. Nihil anim keffiyeh helvetica, craft beer labore wes anderson cred nesciunt sapiente ea proident. Ad vegan excepteur butcher vice lomo. Leggings occaecat craft beer farm-to-table, raw denim aesthetic synth nesciunt you probably haven't heard of them accusamus labore sustainable VHS.
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item">The player who reaches the goal score first wins</li>
+            <li class="list-group-item">Roast the roastee<img src="{% static 'game/logo.png' %}" style="width:20px;height:20px;"></li>
+            <li class="list-group-item">The judge<img src="{% static 'game/gavel.png' %}" style="width:20px;height:20px;"> will decide the winner of the round</li>
+            <li class="list-group-item">The winner will judge the next round</li>
+            <li class="list-group-item">And the next roastee<img src="{% static 'game/logo.png' %}" style="width:20px;height:20px;"> will be randomly picked</li>
+            <li class="list-group-item">For the first round and skipped rounds, roles will be randomly assigned</li>
+          </ul>
         </div>
-      </div>
     </div>
   </div>
 
+ 
+  
 {%endblock%}

@@ -11,30 +11,47 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
 </head>
 <body>
-    <div id="app"></div>
+    <div id="app" style="height: 100vh;"></div>
 
     <script type="text/babel">
         var MESSAGE;
         class Player extends React.Component{
             render(){
-                const style = {
-                    float: 'right'
+                if (this.props.kickable){
+                    var badgeClass = "badge badge-warning my-auto";
                 }
+                else {
+                    var badgeClass = "badge badge-primary my-auto";
+                }
+
                 if (this.props.state === 1){
-                    var imgSrc = "{% static 'game/logo.png' %}"
+                    var imgSrc = "{% static 'game/logo.png' %}";
+                    var imgStyle = {display: "inline"};
                 } else if (this.props.state === 2){
-                    var imgSrc = "{% static 'game/gavel.png' %}"
+                    var imgSrc = "{% static 'game/gavel.png' %}";
+                    var imgStyle = {display: "inline"};
                 } else{
-                    var imgSrc = ""
+                    var imgSrc = "";
+                    var imgStyle = {display: "none"};
+                }
+
+                var adminSrc = "{% static 'game/star.png' %}";
+                if (this.props.admin) {
+                    var adminStyle = {display: "inline"};
+                } 
+                else {
+                    var adminStyle = {display: "none"};
                 }
         
                 return(
-                    <li className='list-group-item'>
-                        <span> name {this.props.name} </span>
-                        <span> state {this.props.state} </span>
-                        <span> {this.props.admin.toString()} </span>
-                        <img src={imgSrc}/>
-                        <span style={style}> {this.props.score}</span>
+                    <li className='list-group-item d-flex justify-content-between align-items-center'>
+                        <span className="mr-3">
+                            {this.props.name} <img height="20px" width="20px" src={imgSrc} style={imgStyle}/>
+                        </span>
+                        <span>
+                            <img className = "mr-1" height="20px" width="20px" src={adminSrc} style={adminStyle}/> <div className={badgeClass}> {this.props.score}</div>
+                        </span>
+                        
                     </li>
                 );
             }
@@ -50,10 +67,10 @@
             render(){
                 const data = this.props.players;
                 var items = Object.keys(data).map(key => 
-                    <Player key={key} name={key} state={data[key].state} score={data[key].score} admin={data[key].admin}/>
+                    <Player key={key} name={key} state={data[key].state} score={data[key].score} admin={data[key].admin} kickable={data[key].kickable}/>
                 );
                 return(
-                    <ul className='list-group'>
+                    <ul className='list-group my-3'>
                         {items}
                     </ul>
                 );
@@ -68,13 +85,10 @@
 
         class StartButton extends React.Component{
             render(){
-                if (this.props.player.button && this.props.game.state !== 3){
+                if (this.props.player.button && this.props.game.state < 3){
                     var buttonStyle = {display: "block"};
                     if (this.props.game.state === 0){
                         var text = "start";
-                        var func = startGame;
-                    } else if (this.props.game.state === 4){
-                        var text = "new game";
                         var func = startGame;
                     } else {
                         var text = "skip";
@@ -86,14 +100,14 @@
                     var func = null
                 }
                 return(
-                    <button onClick={func} style={buttonStyle}> {text} </button>
+                    <button className = "btn btn-outline-danger m-auto" onClick={func} style={buttonStyle}> {text} </button>
                 );
             }
         }
         class Roastee extends React.Component{
 
             componentDidUpdate(prevProps, prevState) {
-                if (this.props.game.state !== 0){
+                if (this.props.game.state !== 0 && this.props.game.state !== 4){
                     var img = images[this.props.game.roastee.username];
                     var imageContainer = document.getElementById("roastImage");
                     imageContainer.replaceChild(img, imageContainer.childNodes[0]);
@@ -101,32 +115,23 @@
             }
 
             render(){
-                const imgStyle = {
-                    maxWidth: "100%",
-                    maxHeight: "100%"
-                }
-                if (this.props.game.winner !== ""){
+                if (this.props.game.state !== 0 && this.props.game.state !== 4){
+                    var roasteeStyle = {display: "block"};
                     return(
-                        <div> 
-                            {this.props.game.winner} won the game!
-                        </div>
-                    )
-                } else if (this.props.game.state !== 0){
-                    return(
-                        <div className="card">
+                        <div className="card my-3" style={roasteeStyle}>
                             <div id="roastImage">
                                 <img/>
                             </div>
-                            <div className="card-body">
+                            <div className="card-body" id="cardBody">
                                 <h5 className="card-title">{this.props.game.roastee.username}</h5>
-                                <p className="card-text">{this.props.game.roastee.description}</p>
+                                <div id="card-text" className="card-text">{this.props.game.roastee.description}</div>
                             </div>
                         </div>
                     );
                 } else {
                     return(
-                        <div>Get Ready to Roast Each Other!</div>
-                    );
+                        <div></div>
+                    )
                 }
             }
         }
@@ -141,6 +146,8 @@
             handleClick(){
                 const roastContent = document.getElementById("roastContent").value;
                 document.getElementById("roastContent").value = "";
+                document.getElementById("roastButton").style.display = "none";
+                document.getElementById("message").innerHTML = "Waiting for other players...";
                 gameSocket.send(JSON.stringify({"action": "roast", "message": roastContent}));
             }
             render(){
@@ -149,14 +156,16 @@
                 } else {
                     var inputStyle = {display: "none"}
                 }
+                var borderStyle = {borderColor: "#dc3545"}
                 return(
-                    <div style={inputStyle} id="roastButton">
+                    <div style={inputStyle} id="roastButton" className="my-3">
                         <div className="input-group">
-                            <textarea id = "roastContent" className="form-control" aria-label="With textarea"></textarea>
+                            <textarea required maxLength="400" style = {borderStyle} id = "roastContent" className="form-control" aria-label="With textarea"></textarea>
                             <div className="input-group-append">
-                                <button onClick={this.handleClick} className="input-group-text">Roast</button>
+                                <button onClick={this.handleClick} className="btn btn-danger">Roast</button>
                             </div>
                         </div>
+                        <small id="roastContentHelp" className="text-right form-text">max 400 characters</small>
                     </div>
                 )
             }
@@ -170,7 +179,7 @@
                 }
 
                 return(
-                    <div className="card text-white bg-danger mb-3" style={cardStyle}>
+                    <div className="card text-white bg-danger my-3" style={cardStyle}>
                         <div className="card-header">{this.props.game.roundWinner}</div>
                         <div className="card-body">
                             <p className="card-text">{this.props.game.selectedRoast}</p>
@@ -188,7 +197,7 @@
             
             handleClick(){
                     if (this.props.player.state === 2){
-                        document.getElementById("judge").style.display = "none"
+                        document.getElementById("judge").style.display = "none";
                         gameSocket.send(JSON.stringify({"action":"judge", "player": this.props.username}));
                     }
                 }
@@ -196,10 +205,10 @@
             render(){
                 //var buttonStyle = {maxWidth: "18rem;"}
                 if (this.props.player.state === 2){
-                    var classStyle = "card btn-outline-danger mb-3";
+                    var classStyle = "card btn-outline-danger my-3";
                     var textStyle = "card-body";
                 } else{
-                    var classStyle = "card mb-3";
+                    var classStyle = "card my-3";
                     var textStyle = "card-body text-danger";
                 }
 
@@ -225,7 +234,7 @@
                     <JudgeButton key={key} username={key} content={data[key]} player={this.props.player}/>
                 )
                 return(
-                    <div style={judgeStyle} id="judge">
+                    <div className="my-3" style={judgeStyle} id="judge">
                         {items}
                     </div>
                 )
@@ -244,7 +253,7 @@
                         this.setState({time: t});
                     } else {
                         if (this.props.player.admin && (this.props.game.state === 1 || this.props.game.state === 2)){
-                            skip();
+                            gameSocket.send(JSON.stringify({'action': "time_out"}));
                         }
                     }
                 }, 1000);
@@ -263,54 +272,88 @@
             render(){
                 if (this.props.game.state === 1 || this.props.game.state === 2){
                     var timerStyle = {display: "block"};
+                    if (this.state.time < 10) {
+                        var timerClass = "text-center my-3 badge badge-danger";
+                    }
+                    else if (this.state.time < 20) {
+                        var timerClass = "text-center my-3 badge badge-warning";
+                    }
+                    else {
+                        var timerClass = "text-center my-3 badge badge-primary";
+                    }
                 } else {
                     var timerStyle = {display: "none"};
+                    var timerClass = "";
                 }
                 return(
-                    <div style={timerStyle}>{this.state.time}</div>
+                    <div className = {timerClass} style={timerStyle}>{this.state.time}</div>
+                )
+            }
+        }
+
+        class Message extends React.Component{
+            render(){
+                if (this.props.game.state === 0){
+                    var message = "Get Ready to Roast Each Other!"
+                }
+                else if (this.props.game.state === 1){
+                    if (this.props.player.state === 0){
+                        var message = "Your turn to roast!"
+                    } 
+                    else if (this.props.player.state === 1){
+                        var message = "Your turn to get roasted!"
+                    }
+                    else {
+                        var message = "Your turn to judge!"
+                    }
+                }
+                else if (this.props.game.state === 2){
+                    if (this.props.player.state === 2){
+                        var message = "Pick your favorite roast!"
+                    }
+                    else{
+                        var message = "Waiting for the judge..."
+                    }
+                }
+                else if (this.props.game.state === 3){
+                    var message = `${this.props.game.roundWinner} won the round!`
+                }
+                else {
+                    var message = `${this.props.game.winner} won the game!`
+                }
+
+                return (
+                    <div id = "message" className = "text-center my-3"> 
+                        {message}
+                    </div>
                 )
             }
         }
 
         class App extends React.Component{
             render(){
+                var maxheight = {height: "100%", width: "100%"}
                 return(
-                    <div className="container-fluid">
-                        <div className="row">
-                            <div className="col">
-                                <div className="row">
-                                    <div className = "col">
-                                        <div>{this.props.game.state}</div>
-                                        <Timer game = {this.props.game} player = {this.props.player}/>
-                                        <Scoreboard players={this.props.game.players}/>
-                                    </div>
-                                </div>
-                                <div className="row">
-                                    <div className="col">
-                                        <StartButton player={this.props.player} game = {this.props.game}/>
-                                    </div>
+                    <div className="container-fluid" style={maxheight}>
+                        <div className="row" style={maxheight}>
+                            <div className="col-xl-3 m-auto">
+                                <div>
+                                    <Scoreboard players={this.props.game.players}/>
+                                    <StartButton player={this.props.player} game = {this.props.game}/>
                                 </div>
                             </div>
-                            <div className="col">
-                                <div className="row">
-                                    <div className="col">
-                                        <Roastee game ={this.props.game}/>
-                                    </div>
+                            <div className="col-xl-6 m-auto">
+                                <div>
+                                    <Roastee game ={this.props.game}/>
                                 </div>
-                                <div className="row">
-                                    <div className="col">
-                                        <Judge player={this.props.player} game = {this.props.game}/>
-                                    </div>
-                                </div>
-                                <div className="row">
-                                    <div className="col">
-                                        <Selection player={this.props.player} game = {this.props.game}/>
-                                    </div>
-                                </div>
-                                <div className="row">
-                                    <div className="col">
-                                        <Roast player={this.props.player} game = {this.props.game}/>
-                                    </div>
+                            </div>
+                            <div className="col-xl-3 m-auto">
+                                <div>
+                                    <Timer game = {this.props.game} player = {this.props.player} sent = {false}/>
+                                    <Message player={this.props.player} game = {this.props.game}/>
+                                    <Judge player={this.props.player} game = {this.props.game}/>
+                                    <Selection player={this.props.player} game = {this.props.game}/>
+                                    <Roast player={this.props.player} game = {this.props.game}/>
                                 </div>
                             </div>
                         </div>
@@ -337,6 +380,9 @@
             gameSocket.send(JSON.stringify({'action': "startGame"}));
         }
         
+        function scrollDown(){
+            window.scrollTo(0,document.body.scrollHeight);
+        }
         var images = {}
 
         gameSocket.onmessage = function(e) {
@@ -345,28 +391,33 @@
             console.log(e.size);
             const data = JSON.parse(e.data);
             console.log(data);
-            var player;
-            for (player in data.game.players){
-                if (!(player in images)){
-                    var image = new Image();
-                    image.src = data.game.players[player].image;
-                    image.className = "card-img-top";
-                    images[player] = image;
-                    console.log("new image 1");
-                } 
-                /* do this after having a server name
-                else {
-                    if (images[player].src !== data.game.players[player].image){
-                        var image = new Image();
-                        image.src = data.game.players[player].image;
-                        image.className = "card-img-top";
-                        images[player] = image;
-                        console.log("new image 2");
+            if (data.action === "game_update"){
+                    /* do this after having a server name
+                    else {
+                        if (images[player].src !== data.game.players[player].image){
+                            var image = new Image();
+                            image.src = data.game.players[player].image;
+                            image.className = "card-img-top";
+                            images[player] = image;
+                            console.log("new image 2");
+                        }
                     }
+                    */
+                ReactDOM.render(<App game={data.game} player={data.player}/>, document.getElementById("app"));
+                if (data.scroll){
+                    scrollDown();
                 }
-                */
             }
-            ReactDOM.render(<App game={data.game} player={data.player}/>, document.getElementById("app"));        
+            else if (data.action === "image_update"){
+                var image = new Image();
+                image.src = data.src;
+                image.className = "card-img-top";
+                images[data.player] = image;
+                console.log(`new image for ${data.player}`);
+            }
+            else if (data.action === "exit"){
+                gameSocket.close(3000);
+            }
         };
 
         gameSocket.onclose = function(e) {

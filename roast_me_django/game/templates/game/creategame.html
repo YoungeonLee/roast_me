@@ -2,12 +2,14 @@
 
 {% block body%}
 <div id='main' class='d-flex flex-column'>
+    <!--
     <script>
         const body_height = document.getElementById('container').offsetHeight;
         const used_height = document.getElementById('fixed_top').scrollHeight;
         const remaing_height = ((body_height - used_height)*.75).toString().concat("px");
         document.getElementById('main').style.height = remaing_height;
     </script>
+    -->
 
     <div class='row flex-grow-1 justify-contents-center m-3'>
         <div class='col my-auto'>
@@ -18,23 +20,27 @@
                 {% csrf_token %} 
                 <div class="form-group">
                     <label for="room-name">Room Name</label>
-                    <input required name='room-name' type="text" class="form-control" id="room-name" placeholder="Room Name" autofocus>                    
+                    <input required pattern="[a-zA-Z0-9_]+" name='room-name' type="text" class="form-control" id="room-name" placeholder="Room Name" autofocus value={{ room_name|default:"''" }}>                    
+                    <small class="form-text text-muted">Use letters, numbers & underscores (no space)</small>
+                    <small class="form-text text-muted">max 20 characters</small>
                 </div>
                 <div class="form-group">
                     <label for="max-people">Max People</label><br>
-                    <input required name='max-people' type="number" class="form-control" id="max-people" value='4'>
+                    <input required name='max-people' type="number" class="form-control" id="max-people" value={{ max_people|default:"'6'" }} min="4">
                 </div>
                 <div class="form-group">
                     <label for="goal-score">Goal Score</label>
-                    <input required class="form-control" type="number" name="goal-score" id="goal-score" value='3'></input>
+                    <input required class="form-control" type="number" name="goal-score" id="goal-score" value={{ goal_score|default:"'3'" }} min="1"></input>
                 </div>
                 <div class="form-group">
                     <label for="timer">Timer</label><br>
-                    <input required name='timer' type="number" class="form-control" id="timer" value='60'>
+                    <input required name='timer' type="number" class="form-control" id="timer" value={{ timer|default:"'60'" }} min="30">
                 </div>
                 <input type="submit" class="btn btn-outline-danger mb-3" value="Submit">
                 {% if message %}
-                        <span class='float-right'>{{message}}</span>
+                    <script>
+                        alert("{{message}}");
+                    </script>
                 {% endif %}
             </form>
         </div>

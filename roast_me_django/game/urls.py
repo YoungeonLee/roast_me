@@ -12,5 +12,6 @@ urlpatterns = [
     path('setprofile/', views.setprofile, name="setprofile"),
     path('profile/', views.profile, name='profile'),
     path('games/room/<str:room_name>/', views.room, name='room'),
-    path('games/creategame/', views.creategame, name='creategame')
+    path('games/creategame/', views.creategame, name='creategame'),
+    path('support/', views.support, name="support")
 ]

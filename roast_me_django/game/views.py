@@ -5,14 +5,13 @@ from django.urls import reverse
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.db.utils import IntegrityError
-from .models import Profile, Game, Player
+from .models import Profile, Game, Player, Message
 from pathlib import Path
 from os.path import join
 from PIL import Image, UnidentifiedImageError
 from django.core.files.uploadedfile import InMemoryUploadedFile
 BASE_DIR = Path(__file__).resolve(strict=True).parent.parent
 from django.contrib.sessions.models import Session
-from io import BytesIO
 
 
 class SearchGameForm(forms.Form):
@@ -31,27 +30,18 @@ def games(request):
     # if need to make profile
     if not profile_exists(request.session):
         return HttpResponseRedirect(reverse("game:setprofile"))
-    
-    game_list = Game.objects.all()
-    """
     if request.method == "POST":
-        form = SearchGameForm(request.POST)
-        if form.is_valid():
-            game = form.cleaned_data["game"]
-            game_list.append(game)
-            return HttpResponseRedirect(reverse('game:games'))
-        else:
-            return render(request, "game/games.html", {
-                "user": profile_exists(request.session),
-                "games": game_list,
-                "form": form
-            })
-        """
+        print(request.POST)
+        game_name = request.POST["gameName"]
+        game_list = Game.objects.filter(name__icontains=game_name)
+    else:   
+        game_list = Game.objects.all()
+        game_name = ""
 
     return render(request, "game/games.html", {
         "user": profile_exists(request.session),
         "games": game_list,
-        "form":SearchGameForm()
+        "game_name": game_name
     })
 
 def login_view(request):
@@ -119,31 +109,34 @@ def setprofile(request):
             print(e)
             return render(request, 'game/setprofile.html',{
                     "user": profile_exists(request.session),
-                    "message": "Server Error; make sure you filled the entire form correctly"
+                    "message": "Server Error; make sure you filled the entire form correctly",
+                    "description": description,
+                    "username": ID
                 })
         
         try:
             # check if image is valid and resize
             print("opening image")
             img = Image.open(image)
-            print("thumbnailing")
-            img.thumbnail((1920, 1080))
-            if (type(image) is InMemoryUploadedFile):
-                print("inmemory")
-                newImage = BytesIO()
-                print("saving")
-                img.save(newImage, format=img.format ,optimize=True)
-                print("assigning")
-                image.file = newImage
-            else:
-                img.save(image.temporary_file_path(), optimize=True)
+            
         except UnidentifiedImageError:
             return render(request, 'game/setprofile.html',{
                     "user": profile_exists(request.session),
-                    "message": "Invalid image"
+                    "message": "Invalid image",
+                    "description": description,
+                    "username": ID
                 })
             
         if profile_exists(request.session):
+            profile = Profile.objects.get(user_id=request.session.session_key)
+            if Player.objects.filter(user=profile).exists():
+                print("set profile: session already has a player")
+                return render(request, 'game/setprofile.html',{
+                        "user": profile_exists(request.session),
+                        "message": "You seem to be in game currently. Exit out of all games to reset profile.",
+                        "description": description,
+                        "username": ID
+                    })
             print(2)
             profile = Profile.objects.get(user_id=request.session.session_key)
             profile.username = ID
@@ -156,7 +149,9 @@ def setprofile(request):
                 print(e)
                 return render(request, 'game/setprofile.html',{
                     "user": profile_exists(request.session),
-                    "message": "The username is already taken"
+                    "message": "The username is already taken",
+                    "description": description,
+                    "username": ID
                 })
         else:
             print(3)
@@ -171,7 +166,9 @@ def setprofile(request):
                 print(e)
                 return render(request, 'game/setprofile.html',{
                     "user": profile_exists(request.session),
-                    "message": "The username is already taken"
+                    "message": "The username is already taken",
+                    "description": description,
+                    "username": ID
                 })
         return HttpResponseRedirect(reverse("game:profile"))
 
@@ -226,11 +223,19 @@ def creategame(request):
         return HttpResponseRedirect(reverse("game:setprofile"))
     # post request
     if request.method == "POST":
-        # if game already exists give error !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         room_name = request.POST["room-name"]
         max_people = request.POST["max-people"]
         goal_score = request.POST["goal-score"]
         timer = request.POST["timer"]
+        if Game.objects.filter(name=room_name).exists():
+            return render(request, "game/creategame.html", {
+            "user": profile_exists(request.session),
+            "message": "Game name taken. Pick a different name!",
+            "room_name": room_name,
+            "max_people": max_people,
+            "goal_score": goal_score,
+            "timer" : timer
+        })
         game = Game(name = room_name, max_people = max_people, goal_score = goal_score, state = 0, round_length=timer)
         game.save()
         return HttpResponseRedirect(reverse("game:room", args=[room_name]))
@@ -238,5 +243,18 @@ def creategame(request):
 
     # get request
     return render(request, "game/creategame.html", {
+        "user": profile_exists(request.session)
+    })
+
+def support(request):
+    if request.method == "POST":
+        content = request.POST["content"]
+        message = Message(content=content)
+        message.save()
+        return render(request, "game/support.html", {
+            "user": profile_exists(request.session),
+            "message": "Submitted"
+        })
+    return render(request, "game/support.html", {
         "user": profile_exists(request.session)
     })

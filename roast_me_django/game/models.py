@@ -6,14 +6,14 @@ import os
 from django.core.validators import validate_image_file_extension
 from django.db.models import Q
 import random
-
+from PIL import Image
 
 # Create your models here.
 class Profile(models.Model):
     user = models.OneToOneField(Session, on_delete=models.CASCADE, related_name= "user")
-    username = models.CharField(max_length=100, unique=True)
+    username = models.CharField(max_length=20, unique=True)
     image = models.ImageField(upload_to="images", validators=[validate_image_file_extension])
-    description = models.CharField(max_length=100)
+    description = models.CharField(max_length=400)
 
 
     def __str__(self):
@@ -48,6 +48,19 @@ def auto_delete_file_on_change(sender, instance, **kwargs):
     if not old_file == new_file:
         if os.path.isfile(old_file.path):
             os.remove(old_file.path)
+
+@receiver(models.signals.post_save, sender=Profile)
+def resize_image_on_save(sender, instance, **kwargs):
+    """
+    resize image after saving to make image lighter and faster
+    """
+    print("open")
+    img = Image.open(instance.image.path)
+    print("thumbnailing")
+    img.thumbnail((1920, 1080))
+    print("save")
+    img.save(instance.image.path, optimize=True)
+    print("done")
 """
 class User(models.Model):
     user_name = models.CharField(max_length=16)
@@ -57,7 +70,7 @@ class User(models.Model):
         return f"{self.user_name}: {self.age}"
 """
 class Game(models.Model):
-    name = models.CharField(max_length=100, primary_key=True)
+    name = models.CharField(max_length=20, primary_key=True)
     max_people = models.IntegerField()
     goal_score = models.IntegerField()
     # state {0: not-started, 1: voting, 2: picking, 3:result, 4: winner}
@@ -73,7 +86,7 @@ class Game(models.Model):
         game["timer"] = self.round_length
         game["players"] = {}
         for player in self.player.order_by('pk'):
-            game["players"][player.user.username] = {"score": player.score, "state":player.state, "admin":player.admin, "image": "../../../" + str(player.user.image)}
+            game["players"][player.user.username] = {"kickable": player.kickable, "score": player.score, "state":player.state, "admin":player.admin, "image": "../../../" + str(player.user.image)}
         game["roastee"] = {}
         roastee = self.roastee()
         if roastee:
@@ -187,6 +200,9 @@ class Game(models.Model):
     def change_state(self, state):
         self.state = state
         self.reset_timer()
+        if state == 0:
+            for player in self.player.all():
+                player.reset_score()
 
     def roast_complete(self):
         return len(self.player.filter(state=0)) == len(self.roast.all())
@@ -221,6 +237,9 @@ class Player(models.Model):
     state = models.IntegerField()
     submitted = models.BooleanField(default=False)
     admin = models.BooleanField(default=False)
+    kickable = models.BooleanField(default=False)
+    joined = models.DateTimeField(auto_now_add=True)
+    channel_name = models.CharField(max_length=100)
 
     def __str__(self):
         return f"{self.user} in {self.game}"
@@ -231,6 +250,8 @@ class Player(models.Model):
     
     def reset_score(self):
         self.score = 0
+        self.state = 0
+        self.kickable = False
         self.save()
 
     def startable(self):
@@ -261,10 +282,16 @@ class Player(models.Model):
 class Roast(models.Model):
     game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name="roast")
     player = models.ForeignKey(Player, on_delete=models.CASCADE, related_name="roast")
-    roast = models.CharField(max_length=100)
+    roast = models.CharField(max_length=400)
     selected = models.BooleanField(default=False)
 
     def select(self):
         self.selected = True
         self.save()
 
+class Message(models.Model):
+    content = models.CharField(max_length=400)
+    created = models.DateTimeField(default=timezone.now)
+
+    def __str__(self):
+        return self.content
