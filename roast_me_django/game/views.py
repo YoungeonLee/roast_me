@@ -44,56 +44,7 @@ def games(request):
         "game_name": game_name
     })
 
-def login_view(request):
-    if request.method == "POST":
-        #print(request.POST)
-        ID = request.POST["InputID"]
-        password = request.POST['InputPassword']
-        user = authenticate(request, username=ID, password=password)
-        if user is not None:
-            login(request=request, user=user)
-            return HttpResponseRedirect(reverse("game:index"))
-        else:
-            return render(request, "game/login.html",{
-                "user": profile_exists(request.session),
-                "message": "Wrong ID or Password"
-            })
-
-    return render(request, 'game/login.html',{
-        "user": profile_exists(request.session)
-    })
     
-def logout_view(request):
-    logout(request)
-    return render(request, "game/index.html",{
-        "user": profile_exists(request.session)
-    })
-
-def signup_view(request):
-    if request.method == "POST":
-        #print(request.POST)
-        ID = request.POST["InputID"]
-        password = request.POST['InputPassword']
-        image = request.FILES['profileImage']
-        description = request.POST["description"]
-        try:
-            user = User.objects.create_user(ID, password=password)
-        except IntegrityError:
-            return render(request, "game/signup.html",{
-                "user": profile_exists(request.session),
-                "message": "Given ID already exists"
-            })
-        profile = Profile(user=user, image=image, description=description)
-        profile.save()
-        user = authenticate(request, username=ID, password=password)
-        login(request=request, user=user)
-        return HttpResponseRedirect(reverse("game:index"))
-
-    #get request
-    return render(request, 'game/signup.html',{
-        "user": profile_exists(request.session)
-    })
-
 def setprofile(request):
     # post request
     if request.method == "POST":
@@ -126,6 +77,7 @@ def setprofile(request):
                     "description": description,
                     "username": ID
                 })
+
             
         if profile_exists(request.session):
             profile = Profile.objects.get(user_id=request.session.session_key)
@@ -199,6 +151,12 @@ def render_image(request, filename):
     except FileNotFoundError:
         return HttpResponseNotFound("<h1>Page not found</h1>")
 
+def static(request, app, filename):
+    try:
+        with open(join(BASE_DIR, "static", app, filename), "rb") as f:
+            return HttpResponse(f.read(), content_type="image/png")
+    except FileNotFoundError:
+        return HttpResponseNotFound("<h1>Page not found</h1>")
 
 def room(request, room_name):
     if Game.objects.filter(name=room_name).exists():
@@ -258,3 +216,4 @@ def support(request):
     return render(request, "game/support.html", {
         "user": profile_exists(request.session)
     })
+

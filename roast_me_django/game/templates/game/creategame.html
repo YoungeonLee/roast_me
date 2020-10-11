@@ -20,7 +20,7 @@
                 {% csrf_token %} 
                 <div class="form-group">
                     <label for="room-name">Room Name</label>
-                    <input required pattern="[a-zA-Z0-9_]+" name='room-name' type="text" class="form-control" id="room-name" placeholder="Room Name" autofocus value={{ room_name|default:"''" }}>                    
+                    <input required maxlength="20" pattern="[a-zA-Z0-9_]+" name='room-name' type="text" class="form-control" id="room-name" placeholder="Room Name" autofocus value={{ room_name|default:"''" }}>                    
                     <small class="form-text text-muted">Use letters, numbers & underscores (no space)</small>
                     <small class="form-text text-muted">max 20 characters</small>
                 </div>

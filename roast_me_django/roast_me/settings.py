@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve(strict=True).parent.parent
@@ -20,13 +21,13 @@ BASE_DIR = Path(__file__).resolve(strict=True).parent.parent
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'o6giprj(9rhn)di$y%+2yy(feef%uqs45@$ykq88a*&l1n9j*9'
-
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'o6giprj(9rhn)di$y%+2yy(feef%uqs45@$ykq88a*&l1n9j*9')
 # SECURITY WARNING: don't run with debug turned on in production!
+#DEBUG = os.environ.get('DJANGO_DEBUG', '') == 'True'
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
-
+ALLOWED_HOSTS = ["61.105.150.12", 'evening-tundra-50688.herokuapp.com']
+ADMINS = [('admin', 'RoastMeWebsite@gmail.com')]
 
 # Application definition
 
@@ -75,7 +76,7 @@ CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            "hosts": [('127.0.0.1', 6379)],
+            "hosts": [('redis', 6379)],
         },
     },
 }
@@ -90,7 +91,7 @@ DATABASES = {
         'NAME': 'roastme',
         'USER': 'postgres',
         'PASSWORD': 'zxc8553',
-        'HOST': 'localhost',
+        'HOST': 'db',
         'PORT': '5432',
     }
 }
@@ -133,3 +134,17 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, "static")
+
+"""
+CSRF_COOKIE_SECURE = True
+
+SESSION_COOKIE_SECURE = True
+
+
+SECURE_SSL_REDIRECT = True
+SECURE_HSTS_SECONDS = 60
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
+"""
+

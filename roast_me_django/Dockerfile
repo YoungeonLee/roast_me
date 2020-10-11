@@ -1,5 +1,9 @@
 FROM python:3
-COPY . /usr/src/app
-WORKDIR /usr/src/app
-RUN pip install -r requirments.txt
-CMD ["python3", "manage.py", "runserver", "0.0.0.0:8000"]
+ENV PYTHONUNBUFFERED=1
+RUN mkdir /code
+WORKDIR /code
+COPY requirements.txt /code/
+RUN pip install -r requirements.txt
+COPY . /code/
+
+

@@ -57,3 +57,44 @@
     </div>
 </div>
 {%endblock%}
+
+
+class Roastee extends React.Component{
+
+    componentDidUpdate(prevProps, prevState) {
+        if (this.props.game.state !== 0 && this.props.game.state !== 4){
+            var imgHeight = document.documentElement.clientHeight - document.getElementById("cardBody").clientHeight - 3 - 32;
+            console.log(imgHeight);
+            var img = images[this.props.game.roastee.username];
+            img.style.maxHeight = `${imgHeight}px`;
+            img.style.maxWidth = `${document.documentElement.clientWidth - 33}px`;
+            img.style.width = "auto";
+            img.style.heigth = 'auto';
+            var imageContainer = document.getElementById("roastImage");
+            imageContainer.replaceChild(img, imageContainer.childNodes[0]);
+            console.log("clientwidth" + imageContainer.childNodes[0].clientWidth);
+            document.getElementById("card-text").style.width = `${imageContainer.childNodes[0].clientWidth}px`;
+        }
+    }
+
+    render(){
+        var maxheight = {maxHeight: "100%", maxWidth: "100vw"};
+        if (this.props.game.state !== 0 && this.props.game.state !== 4){
+            return(
+                <div className="card my-3 mx-auto" style={maxheight}>
+                    <div id="roastImage" className="mx-auto">
+                        <img/>
+                    </div>
+                    <div className="card-body mx-auto" id="cardBody">
+                        <h5 className="card-title">{this.props.game.roastee.username}</h5>
+                        <div id="card-text" className="card-text">{this.props.game.roastee.description}</div>
+                    </div>
+                </div>
+            );
+        } else {
+            return(
+                <div></div>
+            )
+        }
+    }
+}

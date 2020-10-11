@@ -1,0 +1,24 @@
+version: "3.8"
+   
+services:
+  db:
+    image: postgres
+    environment:
+      - POSTGRES_DB=roastme
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=zxc8553
+  web:
+    build: .
+    command: bash -c "python manage.py migrate && python manage.py runserver 0.0.0.0:$PORT"
+    volumes:
+      - .:/code
+    ports:
+      - "$PORT:$PORT"
+    depends_on:
+      - db
+
+  redis:
+    image: "redis:alpine"
+
+    ports:
+      - "6379:6379"
